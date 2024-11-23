@@ -1,0 +1,16 @@
+[Unit]
+Description=SeedLink Client Service
+After=network.target
+
+[Service]
+Type=simple
+User=liuf
+WorkingDirectory=/home/liuf/SeedLink_Client
+ExecStart=/home/liuf/SeedLink_Client/seedlink_client
+StandardOutput=append:/home/liuf/SeedLink_Client/seedlink.log
+StandardError=append:/home/liuf/SeedLink_Client/seedlink.log
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
