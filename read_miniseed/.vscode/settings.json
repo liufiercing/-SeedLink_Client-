@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "steim2.h": "c",
+        "mseed_header.h": "c",
+        "read_mseed.h": "c"
+    }
+}

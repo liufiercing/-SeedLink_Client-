@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "mseed_header.h"
 
 // 判断是否为闰年
@@ -75,24 +76,7 @@ void print_mseed_header(const MS2FSDH *header) {
         return;
     }
 
-    printf("\n=== SEED 数据记录头部信息 ===\n");
-    printf("1. 基本信息:\n");
-    printf("序列号: %.6s\n", header->sequence_number);
-    printf("数据质量标识: %c\n", header->dataquality);
-    printf("保留字节: %c\n", header->reserved);
-    printf("台站代码: %.5s\n", header->station);
-    printf("位置标识: %.2s\n", header->location);
-    printf("通道标识: %.3s\n", header->channel);
-    printf("网络代码: %.2s\n", header->network);
-
-    printf("\n2. 时间信息:\n");
-    int month, day;
-    day_to_month_day(header->year, header->day, &month, &day);
-    printf("时间: %d-%02d-%02d %02d:%02d:%02d.%05d\n",
-           header->year, month, day,
-           header->hour, header->min, header->sec,
-           header->fract * 10 + header->unused);
-
+    // 计算采样率
     double samprate = 0.0;
     if (header->samprate_fact != 0) {
         if (header->samprate_fact > 0) {
@@ -110,20 +94,36 @@ void print_mseed_header(const MS2FSDH *header) {
         }
     }
 
-    printf("\n3. 数据信息:\n");
-    printf("采样点数: %d\n", header->numsamples);
-    printf("采样率因子: %d\n", header->samprate_fact);
-    printf("采样率乘数: %d\n", header->samprate_mult);
-    printf("计算得到的采样率: %.3f SPS\n", samprate);
+    // 计算日期
+    int month, day;
+    day_to_month_day(header->year, header->day, &month, &day);
 
-    printf("\n4. 标志位信息:\n");
-    printf("活动标志: 0x%02X\n", header->act_flags);
-    printf("I/O标志: 0x%02X\n", header->io_flags);
-    printf("数据质量标志: 0x%02X\n", header->dq_flags);
+    // 获取当前时间
+    char timebuf[64];  // 增大缓冲区大小
+    time_t rawtime;
+    struct tm *timeinfo;
 
-    printf("\n5. 结构信息:\n");
-    printf("Blockette数量: %d\n", header->numblockettes);
-    printf("时间校正: %d\n", header->time_correct);
-    printf("数据开始位置: %d (0x%04X)\n", header->data_offset, header->data_offset);
-    printf("第一个Blockette位置: %d (0x%04X)\n", header->blockette_offset, header->blockette_offset);
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    if (!timeinfo) {  // 添加错误检查
+        printf("错误：获取本地时间失败\n");
+        return;
+    }
+    
+    if (strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", timeinfo) == 0) {  // 添加错误检查
+        printf("错误：格式化时间失败\n");
+        return;
+    }
+
+    // 输出头部信息（单行，带时间戳）
+    printf("[%s] Header Info | MSEED: %.2s.%.5s.%.2s.%.3s | %d-%02d-%02d %02d:%02d:%02d.%05d | %d samples @ %.3f Hz | Quality=%c Seq=%.6s | Flags[act:0x%02X io:0x%02X dq:0x%02X] | %d blockettes, offset=%d\n",
+           timebuf,
+           header->network, header->station, header->location, header->channel,
+           header->year, month, day,
+           header->hour, header->min, header->sec,
+           header->fract * 10 + header->unused,
+           header->numsamples, samprate,
+           header->dataquality, header->sequence_number,
+           header->act_flags, header->io_flags, header->dq_flags,
+           header->numblockettes, header->data_offset);
 } 
