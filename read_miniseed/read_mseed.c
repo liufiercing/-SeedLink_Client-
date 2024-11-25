@@ -1,8 +1,6 @@
-
-
-#include "mseed_header.h"
 #include "steim2.h"
 #include "read_mseed.h"
+#include "blockette.h"
 
 
 
@@ -46,9 +44,14 @@ int process_mseed_record(const unsigned char *record_start,
         printf("[%s] 错误：解析头部失败\n", get_current_time());
         return -1;
     }
-
-    // 打印头部信息
-    // print_mseed_header(header);
+     print_mseed_header(header);
+    // 处理Blockettes
+    if (header->numblockettes > 0) {
+        if (process_blockettes(record_start, header->blockette_offset, header->numblockettes) != 0) {
+            printf("[%s] 错误：处理Blockettes失败\n", get_current_time());
+            return -1;
+        }
+    }
 
     // 分配解码数据缓冲区
     *decoded_data = malloc(header->numsamples * sizeof(int32_t));

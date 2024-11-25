@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "mseed_header.h"
 
 // 写入MAT文件的函数
 void write_mat_file(const char *filename, const int32_t *data, int length) ;
